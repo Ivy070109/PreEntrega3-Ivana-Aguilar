@@ -1,27 +1,44 @@
 import passport from 'passport'
 import LocalStrategy from 'passport-local'
 import GithubStrategy from 'passport-github2'
-import userModel from '../dao/models/users.model.js'
+import jwt from 'passport-jwt'
+import userModel from '../models/users.model.js'
 import { createHash, isValidPassword } from '../utils.js'
 //importo config
 import config from '../config.js'
 
 const initPassport = () => {
-    //función login
+    //función login session
+    // const verifyLogin = async (req, username, password, done) => {
+    //     try { 
+    //         const { email, password } = req.body
+    
+    //         const userInDb = await userModel.findOne({ email: email })
+    
+    //         if (userInDb && isValidPassword(userInDb, password)) {
+    //             req.session.user = userInDb
+    //             return done(null, userInDb)
+    //         } else {
+    //             return done(null, false, { message: 'Datos no válidos' })
+    //         }
+    //     } catch (err) {
+    //         return done(err)
+    //     }
+    // }
+
+    //verificaicón login token
     const verifyLogin = async (req, username, password, done) => {
-        try { 
-            const { email, password } = req.body
-    
-            const userInDb = await userModel.findOne({ email: email })
-    
-            if (userInDb && isValidPassword(userInDb, password)) {
-                req.session.user = userInDb
-                return done(null, userInDb)
-            } else {
-                return done(null, false, { message: 'Datos no válidos' })
+        try {
+            const userInDb = await userModel.findOne({ email: username })
+            
+            if (userInDb !== null && isValidPassword(userInDb, password)) {
+                const { _id, password, ...user } = userInDb._doc
+                if (user) return done(null, user)
             }
+
+            done(null, false)
         } catch (err) {
-            return done(err)
+            return done(`Error passport login: ${err.message}`)
         }
     }
 
@@ -98,12 +115,26 @@ const initPassport = () => {
         }
     }
 
+    const verifyJwt = async (payload, done) => {
+        try {
+            return done (null, payload);
+        } catch (err) {
+            return done(err);
+        }
+    }
+
+    const cookieExtractor = (req) => {
+        let token = null;
+        if (req && req.cookies) token = req.cookies['codertoken'];
+        return token;
+    }
+
     //estrategia local de login
-    passport.use('loginAuth', new LocalStrategy({
-        passReqToCallback: true,
-        usernameField: 'email', 
-        passwordField: 'password', 
-    }, verifyLogin))
+    // passport.use('loginAuth', new LocalStrategy({
+    //     passReqToCallback: true,
+    //     usernameField: 'email', 
+    //     passwordField: 'password', 
+    // }, verifyLogin))
     
     //estrategia local de autenticación de registro
     passport.use('register', new LocalStrategy({
@@ -127,6 +158,10 @@ const initPassport = () => {
         //passReqToCallback: true
     }, verifyGithub))
 
+    passport.use('loginAuth', new jwt.Strategy({
+        jwtFromRequest: jwt.ExtractJwt.fromExtractors([cookieExtractor]),
+        secretOrKey: config.SECRET_KEY
+    }, verifyJwt))
 
     passport.serializeUser((user, done) => {
         done(null, user._id)

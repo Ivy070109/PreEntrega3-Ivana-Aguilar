@@ -20,7 +20,8 @@ const config = {
     UPLOAD_DIR: 'public/img',
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-    GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL,    
+    GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL,   
+    PRIVATE_KEY: process.env.PRIVATE_KEY
 }
 
 export default config 

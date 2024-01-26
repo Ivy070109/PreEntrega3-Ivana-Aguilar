@@ -1,7 +1,7 @@
 import { Router } from 'express'
-//import usersModel from '../dao/models/users.model.js'
+import usersModel from '../models/users.model.js'
 //importo las funciones de bcrypt
-import { createHash, isValidPassword } from '../utils.js'
+import { createHash, isValidPassword, generateToken, authToken, passportCall } from '../utils.js'
 //importar de passport
 import passport from 'passport'
 //importamos el congif de passport
@@ -25,6 +25,28 @@ const auth = (req, res, next) => {
         }
     } catch (err) {
         res.status(500).send({ status: 'ERR', data: err.message })
+    }
+}
+
+const authorizationMid = role => {
+    return async (req, res, next) => {
+        if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autorizado' })
+        if (req.user.role !== role) return res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' })
+        next();
+    }
+}
+
+const handlePolicies = policies => {
+    return async (req, res, next) => {
+        if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autorizado' })
+
+        // Normalizamos todo a mayúsculas para comparar efectivamente
+        const userRole = req.user.role.toUpperCase();
+        policies.forEach((policy, index) => policies[index] = policies[index].toUpperCase());
+
+        if (policies.includes('PUBLIC')) return next();
+        if (policies.includes(userRole)) return next();
+        res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' });
     }
 }
 
@@ -116,18 +138,23 @@ router.get('/longfile', async (req, res) => {
     })
 })
 
-
 //ruta current para login
-router.get('/current', (req, res) => {
-    if (req.user) {
-        const user = req.user
-        res.status(200).send({ message: 'Inicio de sesión exitoso', user })
-    } else {
-        res.redirect('/login')
-    }
+// router.get('/current', authToken, (req, res) => {
+//     // if (req.user) {
+//     //     const user = req.user
+//     //     //res.status(200).send({ message: 'Inicio de sesión exitoso', user })
+//         res.send({ status: 'OK', payload: req.user })
+//     // } else {
+//     //     res.redirect('/login')
+//     // }
+// })
+router.get('/current', passportCall('jwtAuth', { session: false }), handlePolicies(['user', 'premium', 'admin']), async (req, res) => {
+    res.status(200).send({ status: 'OK', data: req.user })
 })
 
-//register con passport
+
+//login con passport
+/*
 router.post('/login', passport.authenticate('loginAuth', { failureRedirect: '/api/sessions/failauth' }), async (req, res) => {
     try {
         res.redirect('/products')
@@ -136,7 +163,40 @@ router.post('/login', passport.authenticate('loginAuth', { failureRedirect: '/ap
     } catch (err) {
         res.status(500).send({ status: 'ERR', data: err.message })
     }
-}) 
+}) */
+
+//login con token
+// router.post('/login', async (req, res) => {
+//     try { 
+//         const { email, password } = req.body
+
+//         const userInDb = await usersModel.findOne({ email: email })
+
+//         if (userInDb !== null && isValidPassword(userInDb, password)) {
+//             //req.session.user = { username: email, admin: true } 
+//             //res.redirect('/products')
+
+//             const access_token = generateToken({ username: email, admin: true }, '1h')
+//             //res.status(200).send({ status: 'OK', data: access_token })
+//             //res.redirect(`/products?access_token=${access_token}`)
+//             res.cookie('codertoken', access_token, { maxAge: 60 * 60 * 1000, httpOnly: true })
+//             res.status(200).send({ status: 'OK', data: { access: "authorized", token: access_token } })
+//             //res.redirect(`/profile?access_token=${access_token}`)
+//         } else {
+//             res.status(401).send({ status: 'ERR', data: `Datos no válidos` })
+//         } 
+//     } catch (err) {
+//         res.status(500).send({ status: 'ERR', data: err.message })
+//         }
+// })
+
+//login passport token
+router.post('/login', passport.authenticate('loginAuth', { failureRedirect: '/login?msg=Usuario o clave no válidos', session: false }), async (req, res) => {
+    const access_token = generateToken(req.user, '1h')
+    res.cookie('codertoken', access_token, { maxAge: 60 * 60 * 1000, httpOnly: true })
+    setTimeout(() => res.redirect('/profile'), 200)
+})
+
 
 //register con password plano
 /*

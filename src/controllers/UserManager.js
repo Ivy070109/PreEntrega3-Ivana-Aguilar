@@ -1,4 +1,6 @@
-import usersModels from '../models/users.model.js'
+import { UserService } from '../services/users.mongo.dao.js'
+
+const userService = new UserService()
 
 class UsersManager {
     constructor() {
@@ -7,8 +9,7 @@ class UsersManager {
     //obtener users
     getUsers = async () => {
         try {
-            const users = await usersModels.find().lean()
-            return users
+            return await UserService.getUsers()
         } catch (err) {
             return err.message
         }

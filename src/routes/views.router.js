@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import ProductManager from '../dao/controllers/ProductManager.js'
-import CartManager from '../dao/controllers/CartManager.js'
+import ProductManager from '../controllers/ProductManager.js'
+import CartManager from '../controllers/CartManager.js'
+import { authToken } from '../utils.js'
 
 const productManager = new ProductManager()
 const cartManager = new CartManager()
@@ -35,12 +36,13 @@ router.get('/products', async (req, res) => {
 })
 
 //caso de ser necesario mantengo la página profile
-router.get('/profile', async (req, res) => {
-    if (req.session.user) {
-        res.render('profile', { user: req.session.user })
-    } else {
-        res.redirect('/login')
-    }
+router.get('/profile', authToken, async (req, res) => {
+    // if (req.user) {
+    // } else {
+    //     res.redirect('/login')
+    // }
+    res.render('profile', { user: req.user })
+
 })
 
 router.get('/carts', async (req, res) => {

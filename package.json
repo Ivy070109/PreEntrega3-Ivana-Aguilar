@@ -8,7 +8,7 @@
     "dev": "nodemon src/app --port=8080 --mode=dev"
   },
   "keywords": [],
-  "author": "",
+  "author": "Ivana Aguilar",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",

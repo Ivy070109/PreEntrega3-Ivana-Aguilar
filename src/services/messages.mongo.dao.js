@@ -1,6 +1,6 @@
 import messageModel from "../models/message.model.js"
 
-class MessagesManager {
+export class MessageService {
     constructor() {
     }
 
@@ -27,4 +27,3 @@ class MessagesManager {
     }
 }
 
-export default MessagesManager

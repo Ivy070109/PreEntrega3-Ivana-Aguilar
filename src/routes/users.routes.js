@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import UserManager from '../dao/controllers/UserManager.js'
+import UserManager from '../controllers/UserManager.js'
 
 const router = Router()
 const controller = new UserManager()

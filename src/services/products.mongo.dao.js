@@ -1,7 +1,7 @@
 import productModel from "../models/products.model.js"
 import mongoosePaginate from 'mongoose-paginate-v2'
 
-class ProductManager {
+export class ProductService {
     constructor() {
     }
 
@@ -84,4 +84,3 @@ class ProductManager {
     }
 }
 
-export default ProductManager
