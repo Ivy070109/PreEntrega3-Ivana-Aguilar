@@ -8,7 +8,6 @@ import { createHash, isValidPassword } from '../utils.js'
 import config from '../config.js'
 
 const initPassport = () => {
-    //función login session
     // const verifyLogin = async (req, username, password, done) => {
     //     try { 
     //         const { email, password } = req.body
@@ -117,24 +116,24 @@ const initPassport = () => {
 
     const verifyJwt = async (payload, done) => {
         try {
-            return done (null, payload);
+            return done (null, payload)
         } catch (err) {
-            return done(err);
+            return done(err)
         }
     }
 
     const cookieExtractor = (req) => {
-        let token = null;
-        if (req && req.cookies) token = req.cookies['codertoken'];
-        return token;
+        let token = null
+        if (req && req.cookies) token = req.cookies['newCommerce']
+        return token
     }
 
-    //estrategia local de login
-    // passport.use('loginAuth', new LocalStrategy({
-    //     passReqToCallback: true,
-    //     usernameField: 'email', 
-    //     passwordField: 'password', 
-    // }, verifyLogin))
+    //estrategjwtAuthia local de login
+    passport.use('loginAuth', new LocalStrategy({
+        passReqToCallback: true,
+        usernameField: 'email', 
+        passwordField: 'password', 
+    }, verifyLogin))
     
     //estrategia local de autenticación de registro
     passport.use('register', new LocalStrategy({
@@ -158,7 +157,7 @@ const initPassport = () => {
         //passReqToCallback: true
     }, verifyGithub))
 
-    passport.use('loginAuth', new jwt.Strategy({
+    passport.use('jwtAuth', new jwt.Strategy({
         jwtFromRequest: jwt.ExtractJwt.fromExtractors([cookieExtractor]),
         secretOrKey: config.SECRET_KEY
     }, verifyJwt))

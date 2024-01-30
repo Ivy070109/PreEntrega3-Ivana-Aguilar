@@ -1,14 +1,12 @@
 import { Router } from 'express'
-import usersModel from '../models/users.model.js'
-//importo las funciones de bcrypt
-import { createHash, isValidPassword, generateToken, authToken, passportCall } from '../utils.js'
 //importar de passport
 import passport from 'passport'
-//importamos el congif de passport
+
+import { createHash, isValidPassword, generateToken, passportCall } from '../utils.js'
 import initPassport from '../auth/passport.auth.js'
 
-//inicializo la estrategia de passport
 initPassport()
+
 const router = Router()
 
 //middleware de autenticación del admin
@@ -28,11 +26,13 @@ const auth = (req, res, next) => {
     }
 }
 
-const authorizationMid = role => {
+// Middleware de permisos, nos permite checkear y también controla los errores para los endpoints
+const authorization = role => {
     return async (req, res, next) => {
-        if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autorizado' })
+        if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autenticado' })
+        console.log(req.user)
         if (req.user.role !== role) return res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' })
-        next();
+        next()
     }
 }
 
@@ -66,7 +66,7 @@ router.get('/logout', async (req, res) => {
     }
 })
 
-//pequeña autenticación del admin, utilizaré un middleware para ésto  
+// pequeña autenticación del admin, utilizaré un middleware para ésto  
 router.get('/admin', auth, async (req, res) => {
     try {
         res.status(200).send({ status: 'OK', data: 'Éstos son los datos para el administrador'})
@@ -106,24 +106,6 @@ router.get('/githubcallback', passport.authenticate('githubAuth', { failureRedir
     res.redirect('/profile')
 })
 
-//login hardcodeado
-/* router.post('/login', async (req, res) => {
-    try { 
-        const { email, password } = req.body
-
-        const userInDb = await usersModel.findOne({ email: email })
-
-        if (userInDb !== null && isValidPassword(userInDb, password)) {
-            req.session.user = { username: email, admin: true } 
-            res.redirect('/products')
-        } else {
-            res.status(401).send({ status: 'ERR', data: `Datos no válidos` })
-        } 
-    } catch (err) {
-        res.status(500).send({ status: 'ERR', data: err.message })
-        }
-}) */
-
 //router de prueba para process.on()
 router.get('/listnumbers', async (req, res) => {
     listNumbers(1, 15, 'tres', 22, 5)
@@ -138,93 +120,49 @@ router.get('/longfile', async (req, res) => {
     })
 })
 
-//ruta current para login
-// router.get('/current', authToken, (req, res) => {
-//     // if (req.user) {
-//     //     const user = req.user
-//     //     //res.status(200).send({ message: 'Inicio de sesión exitoso', user })
-//         res.send({ status: 'OK', payload: req.user })
-//     // } else {
-//     //     res.redirect('/login')
-//     // }
-// })
-router.get('/current', passportCall('jwtAuth', { session: false }), handlePolicies(['user', 'premium', 'admin']), async (req, res) => {
+// tengo que ser un admin para poder ingesar
+router.get('/current', passportCall('jwtAuth', { session: false }), authorization('user'), async (req, res) => {
     res.status(200).send({ status: 'OK', data: req.user })
 })
 
-
-//login con passport
 /*
-router.post('/login', passport.authenticate('loginAuth', { failureRedirect: '/api/sessions/failauth' }), async (req, res) => {
-    try {
-        res.redirect('/products')
-        //res.redirect('/api/sessions/current')
-        //res.status(200).send({ status: 'OK', data: 'bienvenido' })
-    } catch (err) {
-        res.status(500).send({ status: 'ERR', data: err.message })
-    }
-}) */
-
-//login con token
-// router.post('/login', async (req, res) => {
-//     try { 
-//         const { email, password } = req.body
-
-//         const userInDb = await usersModel.findOne({ email: email })
-
-//         if (userInDb !== null && isValidPassword(userInDb, password)) {
-//             //req.session.user = { username: email, admin: true } 
-//             //res.redirect('/products')
-
-//             const access_token = generateToken({ username: email, admin: true }, '1h')
-//             //res.status(200).send({ status: 'OK', data: access_token })
-//             //res.redirect(`/products?access_token=${access_token}`)
-//             res.cookie('codertoken', access_token, { maxAge: 60 * 60 * 1000, httpOnly: true })
-//             res.status(200).send({ status: 'OK', data: { access: "authorized", token: access_token } })
-//             //res.redirect(`/profile?access_token=${access_token}`)
-//         } else {
-//             res.status(401).send({ status: 'ERR', data: `Datos no válidos` })
-//         } 
-//     } catch (err) {
-//         res.status(500).send({ status: 'ERR', data: err.message })
-//         }
-// })
-
-//login passport token
-router.post('/login', passport.authenticate('loginAuth', { failureRedirect: '/login?msg=Usuario o clave no válidos', session: false }), async (req, res) => {
-    const access_token = generateToken(req.user, '1h')
-    res.cookie('codertoken', access_token, { maxAge: 60 * 60 * 1000, httpOnly: true })
-    setTimeout(() => res.redirect('/profile'), 200)
-})
-
-
-//register con password plano
-/*
-router.post('/register', async (req, res) => {
-    try {
-        const { first_name, last_name, email, age, password } = req.body
-
-        const userExists = await usersModel.findOne({ email })
-        if (userExists) {
-            return res.status(401).json({ status: 'ERR', data: 'El correo ya está registrado' })
-        }
-
-        const newUser = new usersModel({
-            first_name,
-            last_name,
-            email,
-            age,
-            password
-        })
-        
-        await newUser.save()
-
-        res.status(200).json({ status: 'OK', data: 'Usuario registrado' })
-    } catch (err) {
-        res.status(400).json({ status: 'ERR', data: err.message })
-    }
+router.get('/current', passportCall('jwtAuth', { session: false }), handlePolicies(['user', 'premium', 'admin']), async (req, res) => {
+    res.status(200).send({ status: 'OK', data: req.user })
 })
 */
+
+//login con token
+/*
+router.post('/login', async (req, res) => {
+    try { 
+        const { email, password } = req.body
+
+        const userInDb = await usersModel.findOne({ email: email })
+
+        if (userInDb !== null && isValidPassword(userInDb, password)) {
+            //req.session.user = { username: email, admin: true } 
+            //res.redirect('/products')
+
+            const access_token = generateToken({ username: email, role: 'admin' }, '1h')
+            //res.status(200).send({ status: 'OK', data: access_token })
+           // res.redirect(`/profile?access_token=${access_token}`)
+            res.cookie('newCommerce', access_token, { maxAge: 60 * 60 * 1000, httpOnly: true })
+            //res.status(200).send({ status: 'OK', data: { access: "authorized", token: access_token } })
+            res.redirect(`/profile?access_token=${access_token}`)
+        } else {
+            res.status(401).send({ status: 'ERR', data: `Datos no válidos` })
+        } 
+    } catch (err) {
+        res.status(500).send({ status: 'ERR', data: err.message })
+        }
+})
+*/
+
+router.post('/login', passport.authenticate('loginAuth', { failureRedirect: '/login?msg=Usuario o clave no válidos', session: false }), async (req, res) => {
+    const access_token = generateToken(req.user, '1h')
+    res.cookie('newCommerce', access_token, { maxAge: 60 * 60 * 1000, httpOnly: true })
+    setTimeout(() => res.redirect('/products'), 200);
+})
 
 //register con passport
 router.post('/register', passport.authenticate('register', { failureRedirect: '/api/sessions/failregister'}), async (req, res) => {

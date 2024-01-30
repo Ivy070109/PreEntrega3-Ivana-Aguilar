@@ -9,7 +9,7 @@ class UsersManager {
     //obtener users
     getUsers = async () => {
         try {
-            return await UserService.getUsers()
+            return await userService.getUsers()
         } catch (err) {
             return err.message
         }

@@ -26,23 +26,26 @@ router.get('/chat', (req, res) => {
 })
 
 //products solo se mostrará luego de login 
-router.get('/products', async (req, res) => {
+router.get('/products', authToken, async (req, res) => {
     const data = await productManager.getProducts(req.query.page, req.query.limit)
     
     data.pages = []
     for (let i = 1; i <= data.totalPages; i++) data.pages.push(i)
 
-    res.render('products', { data })    
+    if (req.user) {
+        res.render('products', { data, login_type: 'jwt', user: req.user })    
+    } else {
+        res.redirect('/login')
+    }
 })
 
 //caso de ser necesario mantengo la página profile
 router.get('/profile', authToken, async (req, res) => {
-    // if (req.user) {
-    // } else {
-    //     res.redirect('/login')
-    // }
-    res.render('profile', { user: req.user })
-
+    if (req.user) {
+        res.render('profile', { user: req.user })
+    } else {
+        res.redirect('/login')
+    }
 })
 
 router.get('/carts', async (req, res) => {
