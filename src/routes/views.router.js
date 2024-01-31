@@ -2,83 +2,64 @@ import { Router } from 'express'
 import ProductManager from '../controllers/ProductManager.js'
 import CartManager from '../controllers/CartManager.js'
 import { authToken } from '../utils.js'
+import { publicAccess, privateAccess, handlePolicies } from '../middlewares/athenticate.js'
 
 const productManager = new ProductManager()
 const cartManager = new CartManager()
 
 const router = Router()
 
-router.get('/', async (req, res) => {
-    if (req.session.user) {
-        const productsList = await productManager.getProducts({})
-        res.render('home', { productsList })
-    }else {
-        res.redirect('/login')
-    } 
+router.get('/', publicAccess, async (req, res) => {
+    const productsList = await productManager.getProducts({})
+    res.render('home', { productsList })
 })
 
-router.get('/realtimeproducts', (req, res) => {
+router.get('/realtimeproducts', authToken, handlePolicies(['ADMIN']), async (req, res) => {
     res.render('realtimeproducts')
 })
 
-router.get('/chat', (req, res) => {
+router.get('/chat', authToken, privateAccess, handlePolicies(['USER']), (req, res) => {
     res.render('chat', {})
 })
 
 //products solo se mostrará luego de login 
-router.get('/products', authToken, async (req, res) => {
+router.get('/products', authToken, privateAccess, async (req, res) => {
     const data = await productManager.getProducts(req.query.page, req.query.limit)
     
     data.pages = []
     for (let i = 1; i <= data.totalPages; i++) data.pages.push(i)
 
-    if (req.user) {
-        res.render('products', { data, login_type: 'jwt', user: req.user })    
-    } else {
-        res.redirect('/login')
-    }
+    res.render('products', { data, login_type: 'jwt', user: req.user })    
 })
 
 //caso de ser necesario mantengo la página profile
-router.get('/profile', authToken, async (req, res) => {
-    if (req.user) {
-        res.render('profile', { user: req.user })
-    } else {
-        res.redirect('/login')
-    }
+router.get('/profile', authToken, privateAccess, async (req, res) => {
+    res.render('profile', { user: req.user })
 })
 
-router.get('/carts', async (req, res) => {
+router.get('/carts', authToken, privateAccess, async (req, res) => {
     const cartsProducts = await cartManager.getCarts()
     res.render('carts', { cartsProducts })
 })
 
 // Ruta para obtener un carrito por su id.
-router.get('/carts/:cid', async (req, res) => {
+router.get('/carts/:cid', authToken, privateAccess, async (req, res) => {
     const { cid } = req.params
     let cart = await cartManager.getCartById(cid)
 
     res.render('cart', { cart })
 })
 
-router.get('/register', async (req, res) => {
+router.get('/register', publicAccess, async (req, res) => {
     res.render('register', {})
 })
 
-router.get('/login', async (req, res) => {
-    if (req.session.user) {
-        res.redirect('/products')
-    } else {
-        res.render('login', {})
-    } 
+router.get('/login', publicAccess, async (req, res) => {
+    res.render('login', {})
 })
 
-router.get('/restore', async (req, res) => {
-    if (req.session.user) {
-        res.redirect('/profile')
-    } else {
-        res.render('restore', {})
-    } 
+router.get('/restore', publicAccess, async (req, res) => {
+    res.render('restore', {})
 })
 
 export default router

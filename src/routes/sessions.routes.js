@@ -12,8 +12,8 @@ const router = Router()
 //middleware de autenticación del admin
 const auth = (req, res, next) => {
     try {
-        if (req.session.user.admin) {
-            if (req.session.user.admin === true) {
+        if (req.user.admin) {
+            if (req.user.admin === true) {
                 next()
             } else {
                 res.status(403).send({ status: 'ERR', data: 'Usuario no admin', role: 'user' })
@@ -27,37 +27,39 @@ const auth = (req, res, next) => {
 }
 
 // Middleware de permisos, nos permite checkear y también controla los errores para los endpoints
-const authorization = role => {
-    return async (req, res, next) => {
-        if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autenticado' })
-        console.log(req.user)
-        if (req.user.role !== role) return res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' })
-        next()
-    }
-}
+// const authorization = role => {
+//     return async (req, res, next) => {
+//         if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autenticado' })
+//         console.log(req.user)
+//         if (req.user.role !== role) return res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' })
+//         next()
+//     }
+// }
 
 const handlePolicies = policies => {
     return async (req, res, next) => {
         if (!req.user) return res.status(401).send({ status: 'ERR', data: 'Usuario no autorizado' })
 
-        // Normalizamos todo a mayúsculas para comparar efectivamente
-        const userRole = req.user.role.toUpperCase();
-        policies.forEach((policy, index) => policies[index] = policies[index].toUpperCase());
+        // paso todos los valores a mayúsculas para que no haya errores de reconocimiento en los roles  
+        const userRole = req.user.role.toUpperCase()
+        policies.forEach((policy, index) => policies[index] = policies[index].toUpperCase())
 
-        if (policies.includes('PUBLIC')) return next();
-        if (policies.includes(userRole)) return next();
-        res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' });
+        if (policies.includes('PUBLIC')) return next()
+        if (policies.includes(userRole)) return next()
+        res.status(403).send({ status: 'ERR', data: 'Sin permisos suficientes' }) 
     }
 }
 
 // cerrar sesion
 router.get('/logout', async (req, res) => {
     try {
+        req.user = {}
+        res.clearCookie('newCommerce')
+
         req.session.destroy((err) => {
             if (err) {
                 res.status(500).send({ status: 'ERR', data: err.message })
             } else {
-                //res.status(200).send({ status: 'OK', data: "Sesión finalizada" })
                 res.redirect('/login')
             }
         })
@@ -121,8 +123,9 @@ router.get('/longfile', async (req, res) => {
 })
 
 // tengo que ser un admin para poder ingesar
-router.get('/current', passportCall('jwtAuth', { session: false }), authorization('user'), async (req, res) => {
+router.get('/current', passportCall('jwtAuth', { session: false }), async (req, res) => {
     res.status(200).send({ status: 'OK', data: req.user })
+
 })
 
 /*

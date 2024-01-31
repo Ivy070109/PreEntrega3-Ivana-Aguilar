@@ -1,7 +1,10 @@
 import { Router } from "express"
 import CartManager from "../controllers/CartManager.js"
+import TicketManager from "../controllers/TicketManager.js"
+import { handlePolicies } from "../middlewares/athenticate.js"
 
 const cart = new CartManager()
+const ticket = new TicketManager()
 const router = Router()
 
 //ver todos los carritos
@@ -127,5 +130,18 @@ router.param('cid', async (req, res, next, pid) => {
         res.status(404).send({ status: 'ERR', data: 'Parámetro no válido' })
     }
 })  
+
+// finalizacion de compras 
+router.get('/:cid/purchase', async (req, res) => {
+    try {
+        const cartId = req.params.cid
+        const email = req.user.email
+        const result = await ticket.createTicket(cartId, email)
+
+        res.status(200).send({ status: 'OK', data: result })
+    } catch (err) {
+        res.status(500).send({ status: 'ERR', data: err.message })
+    }
+})
 
 export default router

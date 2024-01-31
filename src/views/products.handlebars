@@ -3,7 +3,7 @@
 </div>
 
 <div class="container-profile">
-    <h3>Usuario: {{user.email}}</h3>
+    <h3>Usuario: {{user.first_name}} {{user.last_name}}</h3>
     <h3>Admin: {{user.role}}</h3
     <div>
         <form action="/api/sessions/logout" method="get">

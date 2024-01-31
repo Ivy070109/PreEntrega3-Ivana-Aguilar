@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import ProductManager from '../controllers/ProductManager.js'
 import { uploader } from '../uploader.js'
+import { handlePolicies } from '../middlewares/athenticate.js'
 
 const productManager = new ProductManager()
 const router = Router()
@@ -11,7 +12,6 @@ router.get("/", async (req, res) => {
 
       const result = await productManager.getProducts(limit, page, category, sort)
       //console.log(result)
-      
       res.status(200).send({ status: 'OK', data: result })
     } catch (error) {
         res.status(500).send(error.message)
@@ -29,7 +29,7 @@ router.get('/:pid', async (req, res) => {
   }
 })
 
-router.post("/", uploader.single('thumbnail'), async (req, res) => {
+router.post("/", handlePolicies(['ADMIN']), uploader.single('thumbnail'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).send({ status: 'FIL', data: 'No se pudo subir el archivo' })
 
@@ -56,7 +56,7 @@ router.post("/", uploader.single('thumbnail'), async (req, res) => {
   }
 })
 
-router.put("/:pid", async (req, res) => {
+router.put("/:pid", handlePolicies(['ADMIN']), async (req, res) => {
   try {
     const { pid } = req.params
     const { title, description, code, price, thumbnail, stock, category, status } = req.body
@@ -73,7 +73,7 @@ router.put("/:pid", async (req, res) => {
   }
 })
 
-router.delete("/:pid", async (req, res) => {
+router.delete("/:pid", handlePolicies(['ADMIN']), async (req, res) => {
   try {
     const pid = req.params.pid
     const productDeleted = await productManager.deleteProductById(pid)

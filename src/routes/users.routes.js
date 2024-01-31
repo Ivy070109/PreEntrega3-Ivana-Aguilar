@@ -6,6 +6,7 @@ const controller = new UserManager()
 
 router.get('/', async (req, res) => {
     try {
+        
         const users = await controller.getUsers()
         res.status(200).send({ status: 'OK', data: users })
     } catch (err) {

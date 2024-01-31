@@ -8,23 +8,6 @@ import { createHash, isValidPassword } from '../utils.js'
 import config from '../config.js'
 
 const initPassport = () => {
-    // const verifyLogin = async (req, username, password, done) => {
-    //     try { 
-    //         const { email, password } = req.body
-    
-    //         const userInDb = await userModel.findOne({ email: email })
-    
-    //         if (userInDb && isValidPassword(userInDb, password)) {
-    //             req.session.user = userInDb
-    //             return done(null, userInDb)
-    //         } else {
-    //             return done(null, false, { message: 'Datos no válidos' })
-    //         }
-    //     } catch (err) {
-    //         return done(err)
-    //     }
-    // }
-
     //verificaicón login token
     const verifyLogin = async (req, username, password, done) => {
         try {
@@ -159,7 +142,7 @@ const initPassport = () => {
 
     passport.use('jwtAuth', new jwt.Strategy({
         jwtFromRequest: jwt.ExtractJwt.fromExtractors([cookieExtractor]),
-        secretOrKey: config.SECRET_KEY
+        secretOrKey: config.PRIVATE_KEY
     }, verifyJwt))
 
     passport.serializeUser((user, done) => {
