@@ -138,24 +138,29 @@ router.param('cid', async (req, res, next, pid) => {
 router.get('/:cid/purchase', authToken, handlePolicies(['USER']), async (req, res) => {
     const { cid } = req.params
     try {
+        //busco el carrito 
         const purchase = await cart.getCartById(cid)
-  
+        //creo un array vacio en el que se mostrarán los productos que no tengan stock
         const unavalibleProducts = []
         let totalAmount = 0
-  
+
+        //busco en el array del carrito los productos
         for (const item of purchase.products) {
             const product = item.product
             const quantity = item.quantity
-  
+
+            // busco el producto 
             const productInStock = await productManager.getProductById(product._id)
-  
+
+            // si el producto se encuentra en el stock le indico que se disminuya en la cantidad disponible 
             if (productInStock.stock >= quantity) {
                 productInStock.stock -= quantity
                 await productInStock.save()
-  
-            totalAmount += product.price * quantity
-            cart.deleteProductInCart(cid, product._id)
+
+                totalAmount += product.price * quantity
+                cart.deleteProductInCart(cid, product._id)
         } else {
+            // muestro en el array los productos cuyo stock no este disponible
             unavalibleProducts.push(product._id)
         }
     }
@@ -163,7 +168,7 @@ router.get('/:cid/purchase', authToken, handlePolicies(['USER']), async (req, re
         await ticket.createTicket(totalAmount, req.user.email)
         res.status(200).send({ status: 'OK', data: unavalibleProducts })
     } catch (error) {
-      res.status(500).send({status: 'ERR', data: error.message })
+        res.status(500).send({status: 'ERR', data: error.message })
     }
 })
 
