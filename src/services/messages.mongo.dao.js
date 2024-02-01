@@ -8,7 +8,6 @@ export class MessageService {
     getMessages = async () => {
         try {
             const lookMessage = await messageModel.find().lean()
-
             return lookMessage    
         } catch (err) {
             return err.message
@@ -19,7 +18,6 @@ export class MessageService {
     createMessage = async (message) => {
         try {
             const newMessage = await messageModel.create(message)
-
             return newMessage
         } catch (err) {
             return err.message

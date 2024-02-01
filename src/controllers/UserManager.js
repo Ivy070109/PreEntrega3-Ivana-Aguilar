@@ -1,18 +1,7 @@
 import { UserService } from '../services/users.mongo.dao.js'
+import UserDTO from '../DTO/user.js'
 
 const userService = new UserService()
-
-// los datos que normalizaré de users
-class UserDTO {
-    constructor(user) {
-        this.first_name = user.name.trim()
-        this.last_name = user.last_name.trim(), 
-        this.age = user.age, 
-        this.email = user.email.toLowerCase().trim(),
-        this.role = user.role === "admin" || user.role === "user" ? user.role : "user"
-    }
-}
-
 class UsersManager {
     constructor() {
     }
@@ -20,8 +9,17 @@ class UsersManager {
     //obtener users
     getUsers = async () => {
         try {
-            const user = await userService.getUsers()
-            return new UserDTO(user)
+            return await userService.getUsers()
+        } catch (err) {
+            return err.message
+        }
+    }
+
+    createUser = async (first_name, last_name, email, age, password, cart, role) => {
+        try {
+            const newUser = new UserDTO({ first_name, last_name, email, age, password: createHash(password), cart, role })
+            const result = await this.dao.createUser(newUser)
+            return result
         } catch (err) {
             return err.message
         }

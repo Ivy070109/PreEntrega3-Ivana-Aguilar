@@ -6,7 +6,7 @@ class CartManager {
     constructor() {
     }
 
-//     //obtener carritos
+    //obtener carritos
     getCarts = async () => {
         try {
             return await cartService.getCarts()
@@ -15,7 +15,7 @@ class CartManager {
         }
     }
 
-//     //obtener el carrito según id
+    //obtener el carrito según id
     getCartById = async (cartId) => {
         try {
             return await cartService.getCartById(cartId)
@@ -24,7 +24,7 @@ class CartManager {
         }
     }
 
-//     //crear carrito
+    //crear carrito
     addCart = async (cart) => {
         try {
             return await cartService.addCart(cart)

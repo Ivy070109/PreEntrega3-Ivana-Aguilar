@@ -14,6 +14,7 @@ router.get('/', publicAccess, async (req, res) => {
     res.render('home', { productsList })
 })
 
+// aqui puedo insertar y eliminar los productos
 router.get('/realtimeproducts', authToken, handlePolicies(['ADMIN']), async (req, res) => {
     res.render('realtimeproducts')
 })

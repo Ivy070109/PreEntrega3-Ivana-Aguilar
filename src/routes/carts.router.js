@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
 })
 
 //modificar carrito
-router.put(':/cid', async (req, res) => {
+router.put(':/cid', handlePolicies(['USER']), async (req, res) => {
     try {
         const { cid } = req.params
         const { newProducts } = req.body 
@@ -77,7 +77,7 @@ router.delete('/:cid', async (req, res) => {
 })
 
 //agregar producto en carrito
-router.post('/:cid/products/:pid', async (req, res) => {
+router.post('/:cid/products/:pid', handlePolicies(['USER']), async (req, res) => {
     try {
         const { cid, pid } = req.params
         const addProduct = await cart.addProductInCart(cid, pid)
@@ -88,7 +88,7 @@ router.post('/:cid/products/:pid', async (req, res) => {
 })
 
 //actualizar cantidad de productos
-router.put('/:cid/products/:pid', async (req, res) => {
+router.put('/:cid/products/:pid', handlePolicies(['USER']), async (req, res) => {
     try {
         const { pid, cid } = req.params
         const { quantity } = req.body
@@ -132,7 +132,7 @@ router.param('cid', async (req, res, next, pid) => {
 })  
 
 // finalizacion de compras 
-router.get('/:cid/purchase', async (req, res) => {
+router.post('/:cid/purchase', handlePolicies(['USER']), async (req, res) => {
     try {
         const cartId = req.params.cid
         const email = req.user.email
