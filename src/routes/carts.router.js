@@ -161,7 +161,7 @@ router.get('/:cid/purchase', authToken, handlePolicies(['USER']), async (req, re
     }
         // ticket
         await ticket.createTicket(totalAmount, req.user.email)
-        res.status(200).send({ message: 'Compra Exitosa', unavalibleProducts: unavalibleProducts })
+        res.status(200).send({ status: 'OK', data: unavalibleProducts })
     } catch (error) {
       res.status(500).send({status: 'ERR', data: error.message })
     }
