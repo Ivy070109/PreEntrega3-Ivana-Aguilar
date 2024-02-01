@@ -86,6 +86,14 @@ class CartManager {
             return err.message
         }
     }
+
+    finalizePurchase = async (cartId) => {
+        try {
+            return await cartService.finalizePurchase(cartId)
+        } catch (err) {
+            return err.message
+        }
+    }
 }
 
 export default CartManager

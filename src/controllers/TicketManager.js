@@ -6,9 +6,9 @@ class TicketManager {
     constructor() {
     }
 
-    createTicket = async (idCart, email) => {
+    createTicket = async (totalAmount, purchaser) => {
         try {
-            return await ticketService.create(idCart, email)
+            return await ticketService.create(totalAmount, purchaser)
         } catch (err) {
             return err.message
         }

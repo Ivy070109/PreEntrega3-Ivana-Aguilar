@@ -1,11 +1,14 @@
 import { Router } from "express"
 import CartManager from "../controllers/CartManager.js"
 import TicketManager from "../controllers/TicketManager.js"
+import ProductManager from '../controllers/ProductManager.js'
+import { authToken } from '../utils.js'
 import { handlePolicies } from "../middlewares/athenticate.js"
 
-const cart = new CartManager()
-const ticket = new TicketManager()
 const router = Router()
+const cart = new CartManager()
+const productManager = new ProductManager()
+const ticket = new TicketManager()
 
 //ver todos los carritos
 router.get('/', async (req, res) => {
@@ -46,7 +49,7 @@ router.post('/', async (req, res) => {
 })
 
 //modificar carrito
-router.put(':/cid', handlePolicies(['USER']), async (req, res) => {
+router.put(':/cid', authToken, handlePolicies(['USER']), async (req, res) => {
     try {
         const { cid } = req.params
         const { newProducts } = req.body 
@@ -77,7 +80,7 @@ router.delete('/:cid', async (req, res) => {
 })
 
 //agregar producto en carrito
-router.post('/:cid/products/:pid', handlePolicies(['USER']), async (req, res) => {
+router.post('/:cid/products/:pid', async (req, res) => {
     try {
         const { cid, pid } = req.params
         const addProduct = await cart.addProductInCart(cid, pid)
@@ -88,7 +91,7 @@ router.post('/:cid/products/:pid', handlePolicies(['USER']), async (req, res) =>
 })
 
 //actualizar cantidad de productos
-router.put('/:cid/products/:pid', handlePolicies(['USER']), async (req, res) => {
+router.put('/:cid/products/:pid', authToken, handlePolicies(['USER']), async (req, res) => {
     try {
         const { pid, cid } = req.params
         const { quantity } = req.body
@@ -132,15 +135,35 @@ router.param('cid', async (req, res, next, pid) => {
 })  
 
 // finalizacion de compras 
-router.post('/:cid/purchase', handlePolicies(['USER']), async (req, res) => {
+router.get('/:cid/purchase', authToken, handlePolicies(['USER']), async (req, res) => {
+    const { cid } = req.params
     try {
-        const cartId = req.params.cid
-        const email = req.user.email
-        const result = await ticket.createTicket(cartId, email)
-
-        res.status(200).send({ status: 'OK', data: result })
-    } catch (err) {
-        res.status(500).send({ status: 'ERR', data: err.message })
+        const purchase = await cart.getCartById(cid)
+  
+        const unavalibleProducts = []
+        let totalAmount = 0
+  
+        for (const item of purchase.products) {
+            const product = item.product
+            const quantity = item.quantity
+  
+            const productInStock = await productManager.getProductById(product._id)
+  
+            if (productInStock.stock >= quantity) {
+                productInStock.stock -= quantity
+                await productInStock.save()
+  
+            totalAmount += product.price * quantity
+            cart.deleteProductInCart(cid, product._id)
+        } else {
+            unavalibleProducts.push(product._id)
+        }
+    }
+        // ticket
+        await ticket.createTicket(totalAmount, req.user.email)
+        res.status(200).send({ message: 'Compra Exitosa', unavalibleProducts: unavalibleProducts })
+    } catch (error) {
+      res.status(500).send({status: 'ERR', data: error.message })
     }
 })
 

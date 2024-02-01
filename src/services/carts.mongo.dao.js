@@ -1,5 +1,4 @@
 import cartModel from '../models/carts.model.js'
-//import productsModel from '../models/products.model.js'
 
 export class CartService {
     constructor() {
@@ -100,7 +99,7 @@ export class CartService {
     }
 
     //borrar los productos en el carrito
-    async deleteProductInCart(cartId, productId) {
+    deleteProductInCart = async (cartId, productId) => {
         try {
             const cart = await cartModel.findById(cartId)
             if (!cart) {
@@ -130,6 +129,15 @@ export class CartService {
             cart.products = []
             await cart.save()
             return cart
+        } catch (err) {
+            return err.message
+        }
+    }
+
+    finalizePurchase = async (cartId) => {
+        try {
+            const result = await cartModel.findById(cartId)
+            return result
         } catch (err) {
             return err.message
         }

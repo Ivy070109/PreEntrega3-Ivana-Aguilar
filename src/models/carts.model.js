@@ -15,8 +15,8 @@ const schema = new mongoose.Schema({
             },
             quantity: {
                 type: Number,
+                _id: false,
             },
-            _id: false,
         },
     ],
 })
