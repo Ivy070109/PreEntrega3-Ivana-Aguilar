@@ -70,7 +70,7 @@ router.delete('/:cid', async (req, res) => {
         const deleteCart = await cart.deleteCart(cid)
 
         if (deleteCart === true) {
-            res.status(200).send({ status: 'OK', data: deleteCart})
+            res.status(200).send({ status: 'OK', data: deleteCart })
         } else {
             res.status(404).send({ status: 'ERR', data: 'Carrito no encontrado'})
         }
@@ -159,11 +159,11 @@ router.get('/:cid/purchase', authToken, handlePolicies(['USER']), async (req, re
 
                 totalAmount += product.price * quantity
                 cart.deleteProductInCart(cid, product._id)
-        } else {
-            // muestro en el array los productos cuyo stock no este disponible
-            unavalibleProducts.push(product._id)
+            } else {
+                // muestro en el array los productos cuyo stock no este disponible
+                unavalibleProducts.push(product._id)
+            }
         }
-    }
         // ticket
         await ticket.createTicket(totalAmount, req.user.email)
         res.status(200).send({ status: 'OK', data: unavalibleProducts })
